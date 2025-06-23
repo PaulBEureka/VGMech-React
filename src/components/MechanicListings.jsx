@@ -6,7 +6,7 @@ const MechanicListings = () => {
 
 
   return (
-    <section className="align-content-center justify-content-center bg-listings" >
+    <section className="align-content-center justify-content-center bg-listings" id="learn">
         <ul className="cards-custom align-content-center justify-content-center d-grid">
             {mechanics.map((mechanic) => (
                 <MechanicListing key={mechanic.CardID} mechanic={mechanic} />
