@@ -5,7 +5,7 @@ const MechanicListing = ({mechanic}) => {
   return (
     
     <li className="align-content-center justify-content-center m-auto outer-card" >
-        <Link to={`/learn/${mechanic.CardID}`} className="card-custom">
+        <Link to={`/learn`} state={mechanic} className="card-custom">
             <img src={`${mechanic.ImageSource}`} className="card__image" alt="" />
             <div className="card__overlay">
                 <div className="card__header">

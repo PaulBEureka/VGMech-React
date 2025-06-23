@@ -5,13 +5,14 @@ import NotFoundPage from './pages/NotFoundPage'
 import LearnPage from './pages/LearnPage'
 
 
+
 function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path='/' element={<MainLayout/>}>
         <Route index element={<HomePage/>}/>
         <Route path='*' element={<NotFoundPage/>}/>
-        <Route path='/learn/:id' element={<LearnPage/>}/>
+        <Route path='/learn' element={<LearnPage/>}/>
       </Route>
     )
   )
