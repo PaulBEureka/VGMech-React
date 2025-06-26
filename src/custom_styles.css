@@ -864,8 +864,10 @@ pre {
     font-size:14px;
 }
 
-
-
+.comment-textarea-white-placeholder::placeholder {
+  color: #fff !important;
+  opacity: 1;
+}
 
 /*UserPage Styles*/
 body {
@@ -1269,8 +1271,6 @@ body {
 
 
 
-
-
 .fil-shoes1, .fil-shoes2 {
     fill: #333333
 }
@@ -1378,4 +1378,284 @@ body {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
     }
+}
+
+.sign-in-placeholder-white::placeholder {
+  color: #fff !important;
+  opacity: 1;
+}
+
+/* --- Minimalist About Us Section --- */
+.aboutus-minimalist-bg {
+  background: rgba(20, 20, 30, 0.95);
+  box-shadow: 0 0 32px 0 rgba(255, 80, 0, 0.08), 0 0 0 2px rgba(255, 80, 0, 0.12);
+}
+
+.aboutus-title {
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 0 12px #ffb300, 0 0 2px #ff2d00;
+  margin-bottom: 2rem;
+}
+
+.aboutus-avatar {
+  width: 110px;
+  height: 110px;
+  background: rgba(30, 30, 40, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 16px 2px #ffb30099, 0 0 0 4px #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  transition: box-shadow 0.3s;
+}
+.aboutus-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.98) contrast(1.1);
+}
+.aboutus-avatar:hover {
+  box-shadow: 0 0 32px 4px #ff2d00cc, 0 0 0 4px #ffb300;
+}
+
+.aboutus-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 6px #ffb300, 0 0 2px #ff2d00;
+  margin-bottom: 0.5rem;
+}
+
+.aboutus-purpose-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 8px #ffb300, 0 0 2px #ff2d00;
+}
+
+.aboutus-purpose {
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 500;
+  background: rgba(30, 30, 40, 0.7);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 0 12px 0 #ffb30033;
+}
+
+@media (max-width: 768px) {
+  .aboutus-title { font-size: 2rem; }
+  .aboutus-avatar { width: 80px; height: 80px; }
+  .aboutus-purpose { font-size: 1rem; padding: 1rem; }
+}
+
+/* --- Hero Carousel Minimalist Game Theme --- */
+.carousel-container {
+  background: rgba(20, 20, 30, 0.92);
+}
+
+.carousel-item {
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  border-radius: 32px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.carousel-title h1 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 16px #ffb300, 0 0 2px #ff2d00;
+  margin-bottom: 0.5rem;
+}
+
+.carousel-title p {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #fff;
+  text-shadow: 0 0 8px #ffb30099;
+  margin-bottom: 0;
+}
+
+.carousel-item img {
+  border-radius: 18px;
+  box-shadow: 0 0 24px 0 #ffb30044, 0 0 0 2px #ff2d0033;
+  background: #181818;
+  padding: 0.5rem;
+  max-width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  margin: 0 auto;
+  display: block;
+}
+
+.carousel .carousel-indicators [data-bs-target] {
+  background-color: #ffb300;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin: 0 6px;
+}
+
+.carousel .carousel-indicators .active {
+  background-color: #ff2d00;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  filter: drop-shadow(0 0 8px #ffb300) drop-shadow(0 0 2px #ff2d00);
+}
+
+@media (max-width: 768px) {
+  .carousel-title h1 { font-size: 1.3rem; }
+  .carousel-title p { font-size: 0.95rem; }
+  .carousel-item img { max-height: 140px; }
+  .carousel-container { border-radius: 18px; }
+}
+
+/* --- Improved Mechanic Listing Card Styles --- */
+.cards-custom {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 2.2rem;
+  margin: 3rem 2vw;
+  padding: 0;
+  list-style-type: none;
+}
+
+.outer-card {
+  border-radius: 32px;
+  box-shadow: 0 0 32px 0 #ffb30022, 0 0 0 2px #ff2d0033;
+  background: rgba(20, 20, 30, 0.92);
+  margin-bottom: 1.5rem;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+.outer-card:hover {
+  box-shadow: 0 0 48px 0 #ffb30055, 0 0 0 4px #ff2d00cc;
+  transform: translateY(-6px) scale(1.03);
+}
+
+.card-custom {
+  position: relative;
+  display: block;
+  min-height: 340px;
+  width: 100%;
+  border-radius: 32px;
+  overflow: hidden;
+  text-decoration: none;
+  background: transparent;
+}
+
+.card__image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 32px 32px 0 0;
+  box-shadow: 0 2px 16px #ffb30033;
+  background: #181818;
+}
+
+.card__overlay {
+  box-sizing: border-box;
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  border-radius: 0 0 32px 32px;
+  background: rgba(30, 30, 40, 0.98);
+  color: #fff;
+  transform: translateY(90%);
+  transition: .4s cubic-bezier(.77,0,.175,1);
+  padding: 1.2rem 1.2rem 1.5rem 1.2rem;
+}
+.card-custom:hover .card__overlay {
+  transform: translateY(0);
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  gap: 1.2em;
+  padding: 0.5em 0 0.5em 0;
+  background: none;
+  border-radius: 0;
+  margin-bottom: 0.5em;
+}
+
+.card__thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 8px #ffb30099;
+  border: 2px solid #ffb300;
+}
+
+.card__title {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 8px #ffb300, 0 0 2px #ff2d00;
+  margin-bottom: 0.1em;
+}
+
+.card__status {
+  font-size: 0.9em;
+  color: #ffb300;
+  font-weight: 700;
+  text-shadow: 0 0 4px #ffb30099;
+}
+
+.card__title_description {
+  color: #ffb300;
+  font-size: 1em;
+  font-weight: 700;
+  margin-bottom: 0.2em;
+  margin-top: 0.5em;
+}
+
+.card__description {
+  color: #fff;
+  font-size: 0.98em;
+  font-weight: 400;
+  margin: 0;
+  padding-left: 0;
+  padding-bottom: 0;
+  font-family: inherit;
+  text-shadow: 0 0 4px #181818cc;
+}
+
+@media (max-width: 600px) {
+  .cards-custom {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+    margin: 1.5rem 0.5vw;
+  }
+  .outer-card {
+    border-radius: 18px;
+  }
+  .card-custom {
+    border-radius: 18px;
+    min-height: 260px;
+  }
+  .card__image {
+    border-radius: 18px 18px 0 0;
+    height: 120px;
+  }
+  .card__overlay {
+    border-radius: 0 0 18px 18px;
+    padding: 0.7rem 0.7rem 1rem 0.7rem;
+  }
+  .card__thumb {
+    width: 36px;
+    height: 36px;
+  }
 }

@@ -3,6 +3,7 @@ import MainLayout from './layouts/MainLayout'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
 import LearnPage from './pages/LearnPage'
+import SignInPage from './pages/SignInPage'
 
 
 
@@ -12,7 +13,8 @@ function App() {
       <Route path='/' element={<MainLayout/>}>
         <Route index element={<HomePage/>}/>
         <Route path='*' element={<NotFoundPage/>}/>
-        <Route path='/learn' element={<LearnPage/>}/>
+        <Route path='/learn/:mechanicId' element={<LearnPage/>}/>
+        <Route path='/sign-in' element={<SignInPage/>}/>
       </Route>
     )
   )

@@ -110,7 +110,7 @@ const LearnPage = () => {
                     <h5 className="ms-3 my-auto text-white" id="SessionUserLabel">Guest</h5>
                   </div>
                   <div className="col">
-                    <textarea name="msg" placeholder="Type your comment here" id="commentbox" rows="3" className="form-control my-2" style={{backgroundColor: '#2d0b00', color: '#ffe259', borderColor: '#ffb347', resize: 'none', boxShadow: '0 0 6px #d7263d'}} draggable="false"></textarea>
+                    <textarea name="msg" placeholder="Type your comment here" id="commentbox" rows="3" className="form-control my-2 comment-textarea-white-placeholder" style={{backgroundColor: '#2d0b00', color: 'white', borderColor: '#ffb347', resize: 'none', boxShadow: '0 0 6px #d7263d'}} draggable="false"></textarea>
                   </div>
                   <div className="col-auto d-flex align-items-end">
                     <button type="button" className="btn btn-dark my-2" style={{fontWeight: 'bold', width: 'auto', minWidth: 0, padding: '0.375rem 1.25rem', border: '2px solid #ffb347', color: '#ffe259', background: '#2d0b00'}} disabled>Sign in to post</button>

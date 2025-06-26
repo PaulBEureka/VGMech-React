@@ -4,7 +4,7 @@ import GameListing from './GameListing'
 
 const GameListings = () => {
   return (
-    <section className="mini_games_bg_home">
+    <section className="intro-section-color">
         <div className=" text-center text-light pt-5">
             <h1 className="display-4 mini_custom_padding fw-bolder">Play competitive mini games<br /> with other learners!</h1>
         </div>

@@ -12,7 +12,7 @@ const Hero = () => {
 
   return (
     <section id="homepage" className="intro-section-color pt-5">
-        <Carousel activeIndex={index} onSelect={handleSelect} className="carousel slide container carousel-container">
+        <Carousel activeIndex={index} onSelect={handleSelect} className="carousel slide carousel-container">
             <Carousel.Item className="carousel-item">
                 <div className="row my-3 py-5">
                     <img className="col-md-6" src="images/movement_gif.gif" alt="movement"></img>
