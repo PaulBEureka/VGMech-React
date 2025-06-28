@@ -1,12 +1,51 @@
 import {React, useState, useEffect} from 'react'
 import { useLocation } from 'react-router-dom';
 import { FaArrowLeft, FaMapMarker } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import LearnData from '../assets/JSONs/Learn.json';
 
 const LearnPage = () => {
   const mechanic = useLocation();
   const {Title, InteractiveControls, UnityLink} = mechanic.state;
+
+  const [user, setUser] = useState(null);
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(true);
+  
+  // Helper to nest replies
+  function nestComments(flatComments) {
+    const map = {};
+    const roots = [];
+    flatComments.forEach(c => {
+      map[c.id] = { ...c, replies: [] };
+    });
+    flatComments.forEach(c => {
+      if (c.parentId) {
+        if (map[c.parentId]) map[c.parentId].replies.push(map[c.id]);
+      } else {
+        roots.push(map[c.id]);
+      }
+    });
+    return roots;
+  }
+
+  useEffect(() => {
+      // Try to get user info from localStorage (set after Google sign-in)
+      const storedUser = localStorage.getItem('vgmech_user');
+      if (storedUser) {
+          setUser(JSON.parse(storedUser));
+      }
+
+      // Fetch comments for this mechanic
+      fetch(`http://localhost:5000/api/comments/${encodeURIComponent(Title)}`)
+        .then(res => res.json())
+        .then(data => {
+          setComments(nestComments(data));
+          setLoadingComments(false);
+        });
+  }, [Title]);
 
   // Find the mechanic in Learn.json by Title
   const mechanicData = LearnData.mechanics.find(m => m.Title === Title);
@@ -18,8 +57,162 @@ const LearnPage = () => {
   }
   const codeText = mechanicData ? decodeHtml(mechanicData.CodeText) : '// No code provided.';
 
+  const handlePostComment = async () => {
+    if (!comment.trim()) return;
+    const newComment = {
+      mechanicTitle: Title,
+      user: { name: user.name, picture: user.picture },
+      comment: comment.trim(),
+    };
+    const res = await fetch('http://localhost:5000/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newComment)
+    });
+    if (res.ok) {
+      // Re-fetch all comments to ensure correct nesting
+      const refreshed = await fetch(`http://localhost:5000/api/comments/${encodeURIComponent(Title)}`)
+        .then(r => r.json());
+      setComments(nestComments(refreshed));
+      setComment("");
+      toast.success('Comment posted!');
+    } else {
+      toast.error('Failed to post comment.');
+    }
+  };
+
+  // Add reply state
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
+
+  const handleReply = async (parentId, replyToUser = null) => {
+    if (!replyText.trim()) return;
+    const newReply = {
+      mechanicTitle: Title,
+      user: { name: user.name, picture: user.picture },
+      comment: replyText.trim(),
+      parentId,
+      ...(replyToUser ? { replyToUser } : {})
+    };
+    const res = await fetch('http://localhost:5000/api/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newReply)
+    });
+    if (res.ok) {
+      // Re-fetch all comments to ensure correct nesting
+      const refreshed = await fetch(`http://localhost:5000/api/comments/${encodeURIComponent(Title)}`)
+        .then(r => r.json());
+      setComments(nestComments(refreshed));
+      setReplyingTo(null);
+      setReplyText("");
+      toast.success('Reply posted!');
+    } else {
+      toast.error('Failed to post reply.');
+    }
+  };
+
+  // State to track which comments have their replies shown
+  const [openReplies, setOpenReplies] = useState({});
+
+  // Toggle replies for a comment
+  const toggleReplies = (id) => {
+    setOpenReplies(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // Helper to flatten nested comments for easy update
+  function flattenComments(comments) {
+    let flat = [];
+    comments.forEach(c => {
+      flat.push({ ...c, replies: undefined });
+      if (c.replies && c.replies.length) flat = flat.concat(flattenComments(c.replies));
+    });
+    return flat;
+  }
+
+  // Render comments and replies with YouTube-style "See replies" button
+  function renderComments(commentsList, level = 0) {
+    return commentsList.map(c => {
+      const hasReplies = c.replies && c.replies.length > 0;
+      return (
+        <div key={c.id} className="mb-2">
+          <div className="d-flex align-items-start" style={{marginLeft: level * 0, paddingLeft: level > 0 ? 48 : 0}}>
+            <img src={c.user.picture} alt={c.user.name} className="rounded-circle border border-2 me-2 flex-shrink-0" style={{width: '36px', height: '36px', borderColor: '#ffe259'}} />
+            <div style={{flex: 1, minWidth: 0}}>
+              <div className="d-flex align-items-center gap-2">
+                <span className="fw-bold text-white" style={{fontSize: '1.05em'}}>{c.user.name}</span>
+                <span className="text-white-50 small" style={{fontSize: '0.95em'}}>{new Date(c.date).toLocaleString()}</span>
+              </div>
+              {/* Render comment with bold @username if present */}
+              <div className="text-white mt-1" style={{wordBreak: 'break-word'}}
+                dangerouslySetInnerHTML={{
+                  __html: c.comment.replace(/\*\*(@[^*]+)\*\*/g, '<strong>$1</strong>')
+                }}
+              />
+              <div className="d-flex align-items-center gap-2 mt-1">
+                {user && (
+                  <button
+                    className="btn btn-link p-0 m-0"
+                    style={{color: '#ffe259', fontWeight: 'bold', fontSize: '0.95em'}} 
+                    onClick={() => setReplyingTo(c.id)}
+                  >Reply</button>
+                )}
+              </div>
+              {replyingTo === c.id && (
+                <div className="mt-2 mb-2 ms-0 ms-md-4">
+                  <textarea
+                    className="form-control form-control-sm mb-2"
+                    style={{background: '#2d0b00', color: '#ffe259', borderColor: '#ffb347', boxShadow: '0 0 6px #d7263d'}}
+                    rows={2}
+                    value={replyText}
+                    onChange={e => setReplyText(e.target.value)}
+                    placeholder={`Reply to ${c.user.name}`}
+                  />
+                  <button
+                    className="btn btn-sm btn-success me-2"
+                    disabled={!replyText.trim()} 
+                    onClick={() => handleReply(c.id, level > 0 ? c.user.name : null)}
+                  >Post Reply</button>
+                  <button className="btn btn-sm btn-secondary" onClick={() => {setReplyingTo(null); setReplyText("");}}>Cancel</button>
+                </div>
+              )}
+              {/* See replies button */}
+              {hasReplies && level === 0 && (
+                <button
+                  className="btn btn-link p-0 mt-1"
+                  style={{color: '#ffe259', fontWeight: 'bold', fontSize: '0.95em'}}
+                  onClick={() => toggleReplies(c.id)}
+                >
+                  {openReplies[c.id] ? `Hide replies (${c.replies.length})` : `See replies (${c.replies.length})`}
+                </button>
+              )}
+            </div>
+          </div>
+          {/* Only show replies if openReplies is true for this comment */}
+          {hasReplies && openReplies[c.id] && (
+            <div className="ms-5 mt-1 border-start border-2 border-warning-subtle ps-3" style={{borderColor: '#ffb347 !important'}}>
+              {renderComments(c.replies, level + 1)}
+            </div>
+          )}
+        </div>
+      );
+    });
+  }
+
   return (
     <div className="learn-page-bg min-vh-100 py-5 px-2" style={{background: 'linear-gradient(135deg, #2d0b00 0%, #3a1c0b 100%)'}}>
+      <ToastContainer
+        position="top-right"
+        autoClose={2200}
+        hideProgressBar={true}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable={false}
+        pauseOnHover={false}
+        toastClassName="toastify-custom"
+      />
       <div className="container">
         <div className="row align-items-center mb-4">
           <div className="col-12 text-center">
@@ -106,14 +299,52 @@ const LearnPage = () => {
                 <hr className="my-2" style={{borderColor: '#ffb347'}} />
                 <div className="row g-2 align-items-center mb-3">
                   <div className="col-auto d-flex align-items-center">
-                    <img src="/images/person_icon.png" alt="User" className="rounded-circle border border-2" style={{width: '40px', height: '40px', borderColor: '#ffe259'}} />
-                    <h5 className="ms-3 my-auto text-white" id="SessionUserLabel">Guest</h5>
+                    {user ? (
+                      <div className='d-flex align-items-center'>
+                        <img src={user.picture} alt="User" className="rounded-circle border border-2" style={{width: '40px', height: '40px', borderColor: '#ffe259'}} />
+                        <h6 className="ms-3 my-auto text-white" id="SessionUserLabel">{user.name}</h6>
+                      </div>
+                    ) : (
+                      <div className='d-flex align-items-center'>
+                        <img src={"/images/person_icon.png"} alt="User" className="rounded-circle border border-2" style={{width: '40px', height: '40px', borderColor: '#ffe259'}} />
+                        <h6 className="ms-3 my-auto text-white" id="SessionUserLabel">Guest</h6>
+                      </div>
+                    )}
                   </div>
                   <div className="col">
-                    <textarea name="msg" placeholder="Type your comment here" id="commentbox" rows="3" className="form-control my-2 comment-textarea-white-placeholder" style={{backgroundColor: '#2d0b00', color: 'white', borderColor: '#ffb347', resize: 'none', boxShadow: '0 0 6px #d7263d'}} draggable="false"></textarea>
+                    <textarea
+                      name="msg"
+                      placeholder="Type your comment here"
+                      id="commentbox"
+                      rows="3"
+                      className="form-control my-2 comment-textarea-white-placeholder"
+                      style={{ backgroundColor: '#2d0b00', color: 'white', borderColor: '#ffb347', resize: 'none', boxShadow: '0 0 6px #d7263d' }}
+                      draggable="false"
+                      value={comment}
+                      onChange={e => setComment(e.target.value)}
+                    ></textarea>
                   </div>
                   <div className="col-auto d-flex align-items-end">
-                    <button type="button" className="btn btn-dark my-2" style={{fontWeight: 'bold', width: 'auto', minWidth: 0, padding: '0.375rem 1.25rem', border: '2px solid #ffb347', color: '#ffe259', background: '#2d0b00'}} disabled>Sign in to post</button>
+                    {user ? (
+                      <button
+                        type="button"
+                        className="btn btn-dark my-2"
+                        style={{ fontWeight: 'bold', width: 'auto', minWidth: 0, padding: '0.375rem 1.25rem', border: '2px solid #ffb347', color: '#ffe259', background: '#2d0b00' }}
+                        disabled={!comment.trim()}
+                        onClick={handlePostComment}
+                      >
+                        Comment
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-dark my-2"
+                        style={{ fontWeight: 'bold', width: 'auto', minWidth: 0, padding: '0.375rem 1.25rem', border: '2px solid #ffb347', color: '#ffe259', background: '#2d0b00' }}
+                        onClick={() => window.location.href = '/sign-in'}
+                      >
+                        Sign in to post
+                      </button>
+                    )}
                   </div>
                 </div>
                 <hr className="my-2" style={{borderColor: '#ffb347'}} />
@@ -129,10 +360,17 @@ const LearnPage = () => {
                   <div className="row pb-4">
                     <div className="col comment-section-size shadow bg-black rounded-3 border border-2" style={{borderColor: '#ffb347'}}>
                       <div id="commentSection" className="d-grid py-3">
-                        {/* Existing comments will be dynamically added here */}
-                        <div className="spinner-border text-warning m-auto mt-5" role="status">
-                          <span className="visually-hidden">Loading...</span>
-                        </div>
+                        {loadingComments ? (
+                          <div className="spinner-border text-warning m-auto mt-5" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        ) : (
+                          comments.length === 0 ? (
+                            <div className="text-center text-white-50">No comments yet.</div>
+                          ) : (
+                            renderComments(comments)
+                          )
+                        )}
                       </div>
                     </div>
                   </div>

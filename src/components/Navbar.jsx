@@ -1,71 +1,64 @@
-import React from 'react'
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 
 const Navbar = () => {
-    const [user, setUser] = useState("");
-    const [userFocus, setUserFocus] = useState(false);
+    const [user, setUser] = useState(null);
 
+    useEffect(() => {
+        // Try to get user info from localStorage (set after Google sign-in)
+        const storedUser = localStorage.getItem('vgmech_user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
 
-  return (
-    <nav className="navbar navbar-expand-lg nav-bg fixed-top">
-        <div className="container-fluid mx-5">
-            <button className="navbar-toggler"type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02" aria-controls = "navbarTogglerDemo02" aria-expanded = "false" aria-label="Toggle navigation">
-                <span className="navbar-toggler-icon"></span>
-            </button>
-            <div className="collapse navbar-collapse justify-content-between " id="navbarTogglerDemo02">
-                <NavLink className="flex flex-shrink-0 items-center mr-4 nav-link fw-bolder text-white" to="/">
-                    <img
-                        className="nav-logo"
-                        src="images/VGM_logo.png"
-                        alt="VGMech"
-                    />
-                    VGMech
-                </NavLink>
-                
-                <ul className="navbar-nav mb-3 mb-lg-0">
-                    <li className="nav-item mx-3">
-                        <a className="nav-link text-white" href="/#learn">Learn</a>
-                    </li>
-                    <li className="nav-item mx-3">
-                        <a className="nav-link text-white" href="/#compete">Compete</a>
-                    </li>
-                    <li className="nav-item mx-3">
-                        <a className="nav-link text-white" href="/#about-us">About Us</a>
-                    </li>
+    const handleLogout = () => {
+        localStorage.removeItem('vgmech_user');
+        setUser(null);
+        window.location.href = '/';
+    };
 
-                    
-                </ul>
-
-                {userFocus ? (
-                        <div className="dropdown">
-                            <NavLink className="fw-bolder dropdown-toggle nav-button" to="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-                                {user}
-                            </NavLink>
-                            <image src="../assets/images/vgmech-assets/vgmech-images/person_icon.jpg" alt="" className="rounded-circle record_border shadow" width="40" height="40"></image>
-                            <ul className="dropdown-menu" aria-labelledby="dropdownMenuLink">
-                                <li>
-                                    <NavLink className="dropdown-item" to="/user">User Profile</NavLink>
-                                </li>
-                                <li>
-                                    <button className="dropdown-item text-danger" Text="Log Out" OnClick="btnCurrentUser_Click" CausesValidation="false"></button>
-                                </li>
-                            </ul>
+    return (
+        <nav className="navbar navbar-expand-lg nav-bg fixed-top">
+            <div className="container-fluid mx-5">
+                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+                    <span className="navbar-toggler-icon"></span>
+                </button>
+                <div className="collapse navbar-collapse justify-content-between " id="navbarTogglerDemo02">
+                    <NavLink className="flex flex-shrink-0 items-center mr-4 nav-link fw-bolder text-white" to="/">
+                        <img className="nav-logo" src="images/VGM_logo.png" alt="VGMech" />
+                        VGMech
+                    </NavLink>
+                    <ul className="navbar-nav mb-3 mb-lg-0">
+                        <li className="nav-item mx-3">
+                            <a className="nav-link text-white" href="/#learn">Learn</a>
+                        </li>
+                        <li className="nav-item mx-3">
+                            <a className="nav-link text-white" href="/#about-us">About Us</a>
+                        </li>
+                    </ul>
+                    {user ? (
+                        <div className="d-flex align-items-center gap-2 user-profile-nav">
+                            <img
+                                src={user.picture}
+                                alt={user.name}
+                                className="rounded-circle nav-user-avatar"
+                                style={{ width: 40, height: 40, border: '2px solid #ffe259', boxShadow: '0 0 10px #d7263d', background: '#222' }}
+                            />
+                            <span className="fw-bold text-white nav-user-name" style={{ textShadow: '0 0 6px #d7263d', fontSize: '1.1rem' }}>{user.name}</span>
+                            <button className="btn btn-sm btn-danger ms-2 px-3 py-1 nav-logout-btn" style={{ borderRadius: '16px', background: 'linear-gradient(90deg, #d7263d, #ffb347, #ffe259)', color: '#222', fontWeight: 'bold', border: 'none', boxShadow: '0 0 8px #d7263d' }} onClick={handleLogout}>Log Out</button>
                         </div>
-                    ):
-                    (
+                    ) : (
                         <ul className="navbar-nav">
                             <li className="nav-item nav-button">
-                                <NavLink className="text-white text-decoration-none" to="/sign-in">Sign In | Sign Up</NavLink>
+                                <NavLink className="text-white text-decoration-none" to="/sign-in">Sign In</NavLink>
                             </li>
                         </ul>
                     )}
-                
-                
+                </div>
             </div>
-        </div>
-    </nav>
-  )
-}
+        </nav>
+    );
+};
 
-export default Navbar
+export default Navbar;
