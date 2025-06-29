@@ -1,20 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const Navbar = () => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        // Try to get user info from localStorage (set after Google sign-in)
-        const storedUser = localStorage.getItem('vgmech_user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
+        const auth = getAuth();
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (firebaseUser) {
+                setUser({
+                    name: firebaseUser.displayName,
+                    picture: firebaseUser.photoURL,
+                    email: firebaseUser.email,
+                    uid: firebaseUser.uid
+                });
+                // Optionally update localStorage for other components
+                localStorage.setItem('vgmech_user', JSON.stringify({
+                    name: firebaseUser.displayName,
+                    picture: firebaseUser.photoURL,
+                    email: firebaseUser.email,
+                    uid: firebaseUser.uid
+                }));
+            } else {
+                setUser(null);
+                localStorage.removeItem('vgmech_user');
+            }
+        });
+        return () => unsubscribe();
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('vgmech_user');
+        const auth = getAuth();
+        auth.signOut();
         setUser(null);
+        localStorage.removeItem('vgmech_user');
         window.location.href = '/';
     };
 

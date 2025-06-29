@@ -4,6 +4,9 @@ import { FaArrowLeft, FaMapMarker } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import LearnData from '../assets/JSONs/Learn.json';
+import { ref, push, set, onValue } from 'firebase/database';
+import { db } from '../firebase'; 
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const LearnPage = () => {
   const mechanic = useLocation();
@@ -14,6 +17,32 @@ const LearnPage = () => {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
   
+  // Listen for Firebase Auth state changes
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        setUser({
+          name: firebaseUser.displayName,
+          picture: firebaseUser.photoURL,
+          email: firebaseUser.email,
+          uid: firebaseUser.uid
+        });
+        // Optionally update localStorage for navbar
+        localStorage.setItem('vgmech_user', JSON.stringify({
+          name: firebaseUser.displayName,
+          picture: firebaseUser.photoURL,
+          email: firebaseUser.email,
+          uid: firebaseUser.uid
+        }));
+      } else {
+        setUser(null);
+        localStorage.removeItem('vgmech_user');
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Helper to nest replies
   function nestComments(flatComments) {
     const map = {};
@@ -32,19 +61,20 @@ const LearnPage = () => {
   }
 
   useEffect(() => {
-      // Try to get user info from localStorage (set after Google sign-in)
-      const storedUser = localStorage.getItem('vgmech_user');
-      if (storedUser) {
-          setUser(JSON.parse(storedUser));
-      }
-
-      // Fetch comments for this mechanic
-      fetch(`http://localhost:5000/api/comments/${encodeURIComponent(Title)}`)
-        .then(res => res.json())
-        .then(data => {
-          setComments(nestComments(data));
-          setLoadingComments(false);
-        });
+      // Fetch comments for this mechanic from Firebase Realtime DB
+      const commentsRef = ref(db, `comments/${Title}`);
+      const unsubscribe = onValue(commentsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          // Convert object to array and sort by date or key if needed
+          const arr = Object.entries(data).map(([id, value]) => ({ id, ...value }));
+          setComments(nestComments(arr));
+        } else {
+          setComments([]);
+        }
+        setLoadingComments(false);
+      });
+      return () => unsubscribe();
   }, [Title]);
 
   // Find the mechanic in Learn.json by Title
@@ -59,24 +89,25 @@ const LearnPage = () => {
 
   const handlePostComment = async () => {
     if (!comment.trim()) return;
-    const newComment = {
-      mechanicTitle: Title,
-      user: { name: user.name, picture: user.picture },
+    const auth = getAuth();
+    console.log('Firebase Auth currentUser:', auth.currentUser);
+    console.log('Attempting to post comment. User:', user);
+    const commentsRef = ref(db, `comments/${Title}`);
+    const newCommentRef = push(commentsRef);
+    const commentData = {
+      userId: user?.uid, // from Firebase Auth
+      user: { name: user?.name, picture: user?.picture },
       comment: comment.trim(),
+      date: new Date().toISOString(),
+      parentId: null
     };
-    const res = await fetch('http://localhost:5000/api/comments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newComment)
-    });
-    if (res.ok) {
-      // Re-fetch all comments to ensure correct nesting
-      const refreshed = await fetch(`http://localhost:5000/api/comments/${encodeURIComponent(Title)}`)
-        .then(r => r.json());
-      setComments(nestComments(refreshed));
+    console.log('Posting comment data:', commentData);
+    try {
+      await set(newCommentRef, commentData);
       setComment("");
       toast.success('Comment posted!');
-    } else {
+    } catch (err) {
+      console.error('Error posting comment:', err);
       toast.error('Failed to post comment.');
     }
   };
@@ -87,27 +118,27 @@ const LearnPage = () => {
 
   const handleReply = async (parentId, replyToUser = null) => {
     if (!replyText.trim()) return;
-    const newReply = {
-      mechanicTitle: Title,
-      user: { name: user.name, picture: user.picture },
+    const auth = getAuth();
+    console.log('Firebase Auth currentUser:', auth.currentUser);
+    console.log('Attempting to post reply. User:', user);
+    const commentsRef = ref(db, `comments/${Title}`);
+    const newReplyRef = push(commentsRef);
+    const replyData = {
+      userId: user?.uid, // from Firebase Auth
+      user: { name: user?.name, picture: user?.picture },
       comment: replyText.trim(),
+      date: new Date().toISOString(),
       parentId,
       ...(replyToUser ? { replyToUser } : {})
     };
-    const res = await fetch('http://localhost:5000/api/comments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newReply)
-    });
-    if (res.ok) {
-      // Re-fetch all comments to ensure correct nesting
-      const refreshed = await fetch(`http://localhost:5000/api/comments/${encodeURIComponent(Title)}`)
-        .then(r => r.json());
-      setComments(nestComments(refreshed));
+    console.log('Posting reply data:', replyData);
+    try {
+      await set(newReplyRef, replyData);
       setReplyingTo(null);
       setReplyText("");
       toast.success('Reply posted!');
-    } else {
+    } catch (err) {
+      console.error('Error posting reply:', err);
       toast.error('Failed to post reply.');
     }
   };
