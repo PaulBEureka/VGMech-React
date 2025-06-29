@@ -16,6 +16,7 @@ const LearnPage = () => {
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
+  const [unityStarted, setUnityStarted] = useState(false);
   
   // Listen for Firebase Auth state changes
   useEffect(() => {
@@ -258,35 +259,51 @@ const LearnPage = () => {
               <div className="card-body">
                 <h2 className="fw-bolder mb-3" style={{color: '#ffb347', textShadow: '1px 1px 6px #d7263d'}}>Interactive Demonstration</h2>
                 <div className="ratio ratio-16x9 mb-4 rounded-4 overflow-hidden border border-danger bg-black position-relative" style={{minHeight: '300px', boxShadow: '0 0 16px #d7263d'}}>
-                  <button 
-                    className="btn btn-dark btn-sm position-absolute end-0 top-0 mt-2 me-2 ms-2 px-2 py-1 rounded-circle d-flex align-items-center justify-content-center" 
-                    style={{zIndex: 2, width: '32px', height: '32px', fontSize: '1.1rem', padding: 0, color: '#ffb347', background: '#2d0b00', border: '2px solid #d7263d'}} 
-                    onClick={() => {
-                      const iframe = document.getElementById('unity-iframe');
-                      if (iframe.requestFullscreen) {
-                        iframe.requestFullscreen();
-                      } else if (iframe.mozRequestFullScreen) {
-                        iframe.mozRequestFullScreen();
-                      } else if (iframe.webkitRequestFullscreen) {
-                        iframe.webkitRequestFullscreen();
-                      } else if (iframe.msRequestFullscreen) {
-                        iframe.msRequestFullscreen();
-                      }
-                    }}
-                    title="Full Screen"
-                  >
-                    <span style={{fontSize: '1.2em'}}>&#x26F6;</span>
-                  </button>
-                  <iframe 
-                    id="unity-iframe"
-                    src={UnityLink} 
-                    className="unityLayout w-100 h-100 border-0" 
-                    style={{display: 'block', width: '100%', height: '100%', objectFit: 'contain', background: 'black'}} 
-                    allowFullScreen 
-                    title={Title}
-                    scrolling="no"
-                    frameBorder="0"
-                  ></iframe>
+                  {!unityStarted && (
+                    <div className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center" style={{zIndex: 10, background: 'rgba(20,8,0,0.92)'}}>
+                      <button
+                        className="btn btn-lg btn-warning fw-bold px-5 py-3 shadow-lg"
+                        style={{fontSize: '1.5rem', border: '2px solid #d7263d', color: '#2d0b00', textShadow: '1px 1px 6px #fff'}}
+                        onClick={() => setUnityStarted(true)}
+                      >
+                        Click to Start Demo
+                      </button>
+                      <span className="mt-3 text-white-50">Audio will work after you start</span>
+                    </div>
+                  )}
+                  {unityStarted && (
+                    <>
+                      <button 
+                        className="btn btn-dark btn-sm position-absolute end-0 top-0 mt-2 me-2 ms-2 px-2 py-1 rounded-circle d-flex align-items-center justify-content-center" 
+                        style={{zIndex: 2, width: '32px', height: '32px', fontSize: '1.1rem', padding: 0, color: '#ffb347', background: '#2d0b00', border: '2px solid #d7263d'}} 
+                        onClick={() => {
+                          const iframe = document.getElementById('unity-iframe');
+                          if (iframe.requestFullscreen) {
+                            iframe.requestFullscreen();
+                          } else if (iframe.mozRequestFullScreen) {
+                            iframe.mozRequestFullScreen();
+                          } else if (iframe.webkitRequestFullscreen) {
+                            iframe.webkitRequestFullscreen();
+                          } else if (iframe.msRequestFullscreen) {
+                            iframe.msRequestFullscreen();
+                          }
+                        }}
+                        title="Full Screen"
+                      >
+                        <span style={{fontSize: '1.2em'}}>&#x26F6;</span>
+                      </button>
+                      <iframe 
+                        id="unity-iframe"
+                        src={UnityLink} 
+                        className="unityLayout w-100 h-100 border-0" 
+                        style={{display: 'block', width: '100%', height: '100%', objectFit: 'contain', background: 'black'}} 
+                        allowFullScreen 
+                        title={Title}
+                        scrolling="no"
+                        frameBorder="0"
+                      ></iframe>
+                    </>
+                  )}
                 </div>
                 <h4 className="fw-bold mb-3" style={{color: '#ffb347', textShadow: '1px 1px 6px #d7263d'}}>Interactive Controls</h4>
                 <ul className="list-group list-group-flush bg-transparent mb-0">
