@@ -1,6 +1,6 @@
 import {React, useState, useEffect} from 'react'
 import { useLocation } from 'react-router-dom';
-import { FaArrowLeft, FaMapMarker } from 'react-icons/fa';
+import { FaArrowLeft, FaMapMarker, FaEllipsisV } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import LearnData from '../assets/JSONs/Learn.json';
@@ -17,6 +17,7 @@ const LearnPage = () => {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(true);
   const [unityStarted, setUnityStarted] = useState(false);
+  const [openMenu, setOpenMenu] = useState(null);
   
   // Listen for Firebase Auth state changes
   useEffect(() => {
@@ -44,7 +45,7 @@ const LearnPage = () => {
     return () => unsubscribe();
   }, []);
 
-  // Helper to nest replies
+  // Helper to nest replies: only one level of nesting (YouTube style)
   function nestComments(flatComments) {
     const map = {};
     const roots = [];
@@ -52,13 +53,17 @@ const LearnPage = () => {
       map[c.id] = { ...c, replies: [] };
     });
     flatComments.forEach(c => {
-      if (c.parentId) {
-        if (map[c.parentId]) map[c.parentId].replies.push(map[c.id]);
-      } else {
+      if (c.parentId && map[c.parentId]) {
+        map[c.parentId].replies.push(map[c.id]);
+      } else if (!c.parentId) {
         roots.push(map[c.id]);
       }
     });
-    return roots;
+    // Only one level of replies
+    roots.forEach(root => {
+      root.replies = root.replies.sort((a, b) => new Date(a.date) - new Date(b.date));
+    });
+    return roots.sort((a, b) => new Date(a.date) - new Date(b.date));
   }
 
   useEffect(() => {
@@ -117,22 +122,36 @@ const LearnPage = () => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
 
+  // Helper to find top-level parent id
+  function findTopLevelParentId(commentId, flatComments) {
+    let current = flatComments.find(c => c.id === commentId);
+    while (current && current.parentId) {
+      current = flatComments.find(c => c.id === current.parentId);
+    }
+    return current ? current.id : commentId;
+  }
+
   const handleReply = async (parentId, replyToUser = null) => {
     if (!replyText.trim()) return;
     const auth = getAuth();
-    console.log('Firebase Auth currentUser:', auth.currentUser);
-    console.log('Attempting to post reply. User:', user);
+    // Find all comments flat
+    const allFlat = flattenComments(comments);
+    // Find top-level parent id
+    const topLevelParentId = findTopLevelParentId(parentId, allFlat);
+    // Prepend @username if replying to a reply
+    let replyContent = replyText.trim();
+    if (replyToUser) {
+      replyContent = `@${replyToUser} ` + replyContent;
+    }
     const commentsRef = ref(db, `comments/${Title}`);
     const newReplyRef = push(commentsRef);
     const replyData = {
       userId: user?.uid, // from Firebase Auth
       user: { name: user?.name, picture: user?.picture },
-      comment: replyText.trim(),
+      comment: replyContent,
       date: new Date().toISOString(),
-      parentId,
-      ...(replyToUser ? { replyToUser } : {})
+      parentId: topLevelParentId
     };
-    console.log('Posting reply data:', replyData);
     try {
       await set(newReplyRef, replyData);
       setReplyingTo(null);
@@ -162,23 +181,48 @@ const LearnPage = () => {
     return flat;
   }
 
-  // Render comments and replies with YouTube-style "See replies" button
+  // Render comments and replies (YouTube style: only one level of replies)
   function renderComments(commentsList, level = 0) {
     return commentsList.map(c => {
       const hasReplies = c.replies && c.replies.length > 0;
+      const canDelete = user && (user.uid === c.userId);
       return (
         <div key={c.id} className="mb-2">
-          <div className="d-flex align-items-start" style={{marginLeft: level * 0, paddingLeft: level > 0 ? 48 : 0}}>
+          <div className="d-flex align-items-start" style={{marginLeft: 0, paddingLeft: level > 0 ? 48 : 0}}>
             <img src={c.user.picture} alt={c.user.name} className="rounded-circle border border-2 me-2 flex-shrink-0" style={{width: '36px', height: '36px', borderColor: '#ffe259'}} />
-            <div style={{flex: 1, minWidth: 0}}>
+            <div style={{flex: 1, minWidth: 0, position: 'relative'}}>
               <div className="d-flex align-items-center gap-2">
                 <span className="fw-bold text-white" style={{fontSize: '1.05em'}}>{c.user.name}</span>
                 <span className="text-white-50 small" style={{fontSize: '0.95em'}}>{new Date(c.date).toLocaleString()}</span>
+                {canDelete && (
+                  <div style={{position: 'relative'}}>
+                    <button
+                      className="btn btn-link p-0 m-0"
+                      style={{color: '#ffe259'}}
+                      onClick={() => setOpenMenu(openMenu === c.id ? null : c.id)}
+                      aria-label="Options"
+                    >
+                      <FaEllipsisV />
+                    </button>
+                    {openMenu === c.id && (
+                      <div style={{position: 'absolute', right: 0, top: '100%', zIndex: 20, background: '#2d0b00', border: '1px solid #ffb347', borderRadius: 6, minWidth: 100, boxShadow: '0 2px 8px #000'}}>
+                        <button
+                          className="dropdown-item text-danger fw-bold w-100 text-start px-3 py-2"
+                          style={{background: 'none', border: 'none'}}
+                          onClick={async () => {
+                            await handleDeleteComment(c.id);
+                            setOpenMenu(null);
+                          }}
+                        >Delete</button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               {/* Render comment with bold @username if present */}
               <div className="text-white mt-1" style={{wordBreak: 'break-word'}}
                 dangerouslySetInnerHTML={{
-                  __html: c.comment.replace(/\*\*(@[^*]+)\*\*/g, '<strong>$1</strong>')
+                  __html: c.comment.replace(/@([\w\d_]+)/g, '<strong>@$1</strong>')
                 }}
               />
               <div className="d-flex align-items-center gap-2 mt-1">
@@ -190,25 +234,7 @@ const LearnPage = () => {
                   >Reply</button>
                 )}
               </div>
-              {replyingTo === c.id && (
-                <div className="mt-2 mb-2 ms-0 ms-md-4">
-                  <textarea
-                    className="form-control form-control-sm mb-2"
-                    style={{background: '#2d0b00', color: '#ffe259', borderColor: '#ffb347', boxShadow: '0 0 6px #d7263d'}}
-                    rows={2}
-                    value={replyText}
-                    onChange={e => setReplyText(e.target.value)}
-                    placeholder={`Reply to ${c.user.name}`}
-                  />
-                  <button
-                    className="btn btn-sm btn-success me-2"
-                    disabled={!replyText.trim()} 
-                    onClick={() => handleReply(c.id, level > 0 ? c.user.name : null)}
-                  >Post Reply</button>
-                  <button className="btn btn-sm btn-secondary" onClick={() => {setReplyingTo(null); setReplyText("");}}>Cancel</button>
-                </div>
-              )}
-              {/* See replies button */}
+              {/* See replies button for top-level comments only */}
               {hasReplies && level === 0 && (
                 <button
                   className="btn btn-link p-0 mt-1"
@@ -220,15 +246,45 @@ const LearnPage = () => {
               )}
             </div>
           </div>
-          {/* Only show replies if openReplies is true for this comment */}
-          {hasReplies && openReplies[c.id] && (
+          {/* Replies: only one level, always shown if toggled for top-level */}
+          {hasReplies && level === 0 && openReplies[c.id] && (
             <div className="ms-5 mt-1 border-start border-2 border-warning-subtle ps-3" style={{borderColor: '#ffb347 !important'}}>
-              {renderComments(c.replies, level + 1)}
+              {c.replies.map(reply => renderComments([reply], 1))}
+            </div>
+          )}
+          {/* Reply input for both top-level and replies */}
+          {replyingTo === c.id && (
+            <div className="mt-2 mb-2 ms-0 ms-md-4">
+              <textarea
+                className="form-control form-control-sm mb-2"
+                style={{background: '#2d0b00', color: '#ffe259', borderColor: '#ffb347', boxShadow: '0 0 6px #d7263d'}}
+                rows={2}
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                placeholder={`Reply to ${c.user.name}`}
+              />
+              <button
+                className="btn btn-sm btn-success me-2"
+                disabled={!replyText.trim()} 
+                onClick={() => handleReply(c.id, level > 0 ? c.user.name : null)}
+              >Post Reply</button>
+              <button className="btn btn-sm btn-secondary" onClick={() => {setReplyingTo(null); setReplyText("");}}>Cancel</button>
             </div>
           )}
         </div>
       );
     });
+  }
+
+  // Delete comment handler
+  async function handleDeleteComment(commentId) {
+    try {
+      const commentsRef = ref(db, `comments/${Title}/${commentId}`);
+      await set(commentsRef, null);
+      toast.success('Comment deleted!');
+    } catch (err) {
+      toast.error('Failed to delete comment.');
+    }
   }
 
   return (
