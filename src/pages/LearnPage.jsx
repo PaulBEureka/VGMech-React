@@ -1,5 +1,5 @@
 import {React, useState, useEffect} from 'react'
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaMapMarker, FaEllipsisV } from 'react-icons/fa';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -10,6 +10,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const LearnPage = () => {
   const mechanic = useLocation();
+  const navigate = useNavigate();
   const {Title, InteractiveControls, UnityLink} = mechanic.state;
 
   const [user, setUser] = useState(null);
@@ -444,7 +445,7 @@ const LearnPage = () => {
                         type="button"
                         className="btn btn-dark my-2"
                         style={{ fontWeight: 'bold', width: 'auto', minWidth: 0, padding: '0.375rem 1.25rem', border: '2px solid #ffb347', color: '#ffe259', background: '#2d0b00' }}
-                        onClick={() => window.location.href = '/sign-in'}
+                        onClick={() => navigate('/sign-in')}
                       >
                         Sign in to post
                       </button>
