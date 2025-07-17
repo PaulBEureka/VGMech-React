@@ -4,6 +4,7 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const Navbar = () => {
     const [user, setUser] = useState(null);
+    const [menuOpen, setMenuOpen] = useState(false);
 
     useEffect(() => {
         const auth = getAuth();
@@ -41,10 +42,10 @@ const Navbar = () => {
     return (
         <nav className="navbar navbar-expand-lg nav-bg fixed-top">
             <div className="container-fluid mx-5">
-                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo02" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
-                    <span className="navbar-toggler-icon"></span>
+                <button className="navbar-toggler" type="button" aria-label="Toggle navigation" onClick={() => setMenuOpen(!menuOpen)} style={{color: '#fff', borderColor: '#fff', marginBottom: '0.5rem'}}>
+                    <span className="navbar-toggler-icon" style={{filter: 'invert(1)'}}></span>
                 </button>
-                <div className="collapse navbar-collapse justify-content-between " id="navbarTogglerDemo02">
+                <div className={`collapse navbar-collapse justify-content-between ${menuOpen ? 'show' : ''}`} id="navbarTogglerDemo02">
                     <NavLink className="flex flex-shrink-0 items-center mr-4 nav-link fw-bolder text-white" to="/">
                         <img className="nav-logo" src="images/VGM_logo.png" alt="VGMech" />
                         VGMech
